@@ -3,6 +3,7 @@ package file
 import (
 	"compress/zlib"
 	"os"
+	"sync"
 
 	"github.com/avegner/log/out"
 )
@@ -29,17 +30,34 @@ func New(name string, perm os.FileMode, append bool, comprLevel int) (out.Output
 }
 
 type output struct {
-	z *zlib.Writer
+	mu   sync.Mutex
+	z    *zlib.Writer
+	done chan struct{}
 }
 
 func (o *output) Write(p []byte) (n int, err error) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	return o.z.Write(p)
 }
 
 func (o *output) Flush() {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	o.z.Flush()
 }
 
 func (o *output) Close() error {
-	return o.z.Close()
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	select {
+	case <-o.done:
+		return nil
+	default:
+		close(o.done)
+		return o.z.Close()
+	}
 }
