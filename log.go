@@ -9,6 +9,7 @@ import (
 
 type Logger interface {
 	Printf(level Level, format string, args ...interface{}) error
+	SetMask(mask Level)
 	Child(prefix string) Logger
 }
 
@@ -75,6 +76,10 @@ func (l *logger) Printf(level Level, format string, args ...interface{}) error {
 		o.Flush()
 	}
 	return nil
+}
+
+func (l *logger) SetMask(mask Level) {
+	l.common.setMask(mask)
 }
 
 func (l *logger) Child(name string) Logger {
