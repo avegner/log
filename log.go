@@ -12,7 +12,7 @@ type Logger interface {
 	Printf(level Level, format string, args ...interface{}) error
 	SetMask(mask Level)
 	Flush()
-	Child(prefix string) Logger
+	Child(name string) Logger
 }
 
 type Level int
