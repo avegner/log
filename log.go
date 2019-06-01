@@ -11,6 +11,7 @@ import (
 type Logger interface {
 	Printf(level Level, format string, args ...interface{}) error
 	SetMask(mask Level)
+	Flush()
 	Child(prefix string) Logger
 }
 
@@ -33,7 +34,6 @@ type Flag int
 const (
 	SHORT_TIME_PREFIX = Flag(0x1)
 	LONG_TIME_PREFIX  = Flag(0x2)
-	RELIABLE_MODE     = Flag(0x4)
 )
 
 const (
@@ -93,13 +93,18 @@ func (l *logger) Printf(level Level, format string, args ...interface{}) error {
 		if _, err := o.Write([]byte(rec)); err != nil {
 			return err
 		}
-		o.Flush()
 	}
 	return nil
 }
 
 func (l *logger) SetMask(mask Level) {
 	l.common.setMask(mask)
+}
+
+func (l *logger) Flush() {
+	for _, o := range l.common.getOuts() {
+		o.Flush()
+	}
 }
 
 func (l *logger) Child(name string) Logger {
