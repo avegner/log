@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/avegner/log/out"
 )
@@ -27,6 +28,18 @@ const (
 	ALL_LEVELS = ERROR | INFO | WARNING | DEBUG | CRITICAL
 )
 
+type Flag int
+
+const (
+	SHORT_TIME_PREFIX = Flag(0x1)
+	LONG_TIME_PREFIX  = Flag(0x2)
+	RELIABLE_MODE     = Flag(0x4)
+)
+
+const (
+	STD_FLAGS = SHORT_TIME_PREFIX
+)
+
 func (l Level) String() string {
 	var s string
 
@@ -48,12 +61,13 @@ func (l Level) String() string {
 	return s
 }
 
-func New(name string, mask Level, outs []out.Outputter) Logger {
+func New(name string, mask Level, flags Flag, outs []out.Outputter) Logger {
 	return &logger{
 		name: name,
 		common: &common{
-			mask: mask,
-			outs: outs,
+			mask:  mask,
+			flags: flags,
+			outs:  outs,
 		},
 	}
 }
@@ -68,6 +82,12 @@ func (l *logger) Printf(level Level, format string, args ...interface{}) error {
 	}
 
 	rec := level.String() + " [" + l.name + "] " + fmt.Sprintf(format, args...) + "\n"
+	if l.common.getFlags()&SHORT_TIME_PREFIX != 0x0 {
+		rec = time.Now().Format("15:04:05.000") + " " + rec
+	}
+	if l.common.getFlags()&LONG_TIME_PREFIX != 0x0 {
+		rec = time.Now().Format("2006-01-02 15:04:05.000 -07") + " " + rec
+	}
 
 	for _, o := range l.common.getOuts() {
 		if _, err := o.Write([]byte(rec)); err != nil {
@@ -97,9 +117,10 @@ type logger struct {
 }
 
 type common struct {
-	mu   sync.RWMutex
-	mask Level
-	outs []out.Outputter
+	mu    sync.RWMutex
+	mask  Level
+	flags Flag
+	outs  []out.Outputter
 }
 
 func (c *common) setMask(mask Level) {
@@ -114,6 +135,13 @@ func (c *common) getMask() Level {
 	defer c.mu.RUnlock()
 
 	return c.mask
+}
+
+func (c *common) getFlags() Flag {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.flags
 }
 
 func (c *common) getOuts() []out.Outputter {

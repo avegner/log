@@ -36,7 +36,7 @@ func createOuts(t *testing.T) []out.Outputter {
 
 func createRootLogger(t *testing.T, name string, mask Level) Logger {
 	outs := createOuts(t)
-	l := New(name, mask, outs)
+	l := New(name, mask, STD_FLAGS, outs)
 
 	if l == nil {
 		t.Fatalf("New(): got nil, want no nil")
