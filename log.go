@@ -77,23 +77,29 @@ func (l *logger) Printf(level Level, format string, args ...interface{}) error {
 		return nil
 	}
 
-	if l.parent != nil {
-		return l.parent.Printf(level, "["+l.name+"] "+format, args...)
+	t := time.Now()
+	pr := ""
+
+	for cl := l; cl != nil; cl = cl.parent {
+		pr = "[" + cl.name + "]" + pr
+	}
+	pr = level.String() + " " + pr
+
+	ts := ""
+	if l.common.getFlags()&SHORT_TIME_PREFIX != 0x0 {
+		ts = t.Format("15:04:05.000")
+	} else if l.common.getFlags()&LONG_TIME_PREFIX != 0x0 {
+		ts = t.Format("2006-01-02 15:04:05.000 -07")
 	}
 
-	rec := level.String() + " [" + l.name + "] " + fmt.Sprintf(format, args...) + "\n"
-	if l.common.getFlags()&SHORT_TIME_PREFIX != 0x0 {
-		rec = time.Now().Format("15:04:05.000") + " " + rec
-	}
-	if l.common.getFlags()&LONG_TIME_PREFIX != 0x0 {
-		rec = time.Now().Format("2006-01-02 15:04:05.000 -07") + " " + rec
-	}
+	rec := ts + " " + pr + " " + fmt.Sprintf(format, args...) + "\n"
 
 	for _, o := range l.common.getOuts() {
 		if _, err := o.Write([]byte(rec)); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -116,7 +122,7 @@ func (l *logger) Child(name string) Logger {
 }
 
 type logger struct {
-	parent Logger
+	parent *logger
 	name   string
 	*common
 }
