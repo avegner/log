@@ -11,7 +11,8 @@ var (
 )
 
 func TestMultiWriteNet(t *testing.T) {
-	o := createNetOutput(t, network, address)
+	o := createNetOut(t, network, address)
+	defer closeOut(t, o)
 	done := make(chan struct{})
 
 	r := func(rec string) {
@@ -32,10 +33,16 @@ func TestMultiWriteNet(t *testing.T) {
 	close(done)
 }
 
-func createNetOutput(t *testing.T, network, address string) Outputter {
+func createNetOut(t *testing.T, network, address string) Outputter {
 	o, err := NewNetOut(network, address)
 	if err != nil {
 		t.Fatalf("NewNetOut(): got '%v' error, want no error", err)
 	}
 	return o
+}
+
+func closeOut(t *testing.T, o Outputter) {
+	if err := o.Close(); err != nil {
+		t.Fatalf("Close(): got '%v' error, want no error", err)
+	}
 }

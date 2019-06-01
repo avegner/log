@@ -32,12 +32,12 @@ const (
 type Flag int
 
 const (
-	SHORT_TIME_PREFIX = Flag(0x1)
-	LONG_TIME_PREFIX  = Flag(0x2)
+	SHORT_TIMESTAMP = Flag(0x1)
+	LONG_TIMESTAMP  = Flag(0x2)
 )
 
 const (
-	STD_FLAGS = SHORT_TIME_PREFIX
+	STD_FLAGS = SHORT_TIMESTAMP
 )
 
 func (l Level) String() string {
@@ -83,12 +83,12 @@ func (l *logger) Printf(level Level, format string, args ...interface{}) error {
 	for cl := l; cl != nil; cl = cl.parent {
 		pr = "[" + cl.name + "]" + pr
 	}
-	pr = level.String() + " " + pr
+	pr = level.String() + ":" + pr
 
 	ts := ""
-	if l.common.getFlags()&SHORT_TIME_PREFIX != 0x0 {
+	if l.common.getFlags()&SHORT_TIMESTAMP != 0x0 {
 		ts = t.Format("15:04:05.000")
-	} else if l.common.getFlags()&LONG_TIME_PREFIX != 0x0 {
+	} else if l.common.getFlags()&LONG_TIMESTAMP != 0x0 {
 		ts = t.Format("2006-01-02 15:04:05.000 -07")
 	}
 

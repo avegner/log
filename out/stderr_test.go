@@ -6,7 +6,8 @@ import (
 )
 
 func TestMultiWriteStderr(t *testing.T) {
-	o := createStderrOutput(t)
+	o := createStderrOut(t)
+	defer closeOut(t, o)
 	done := make(chan struct{})
 
 	r := func(rec string) {
@@ -27,7 +28,7 @@ func TestMultiWriteStderr(t *testing.T) {
 	close(done)
 }
 
-func createStderrOutput(t *testing.T) Outputter {
+func createStderrOut(t *testing.T) Outputter {
 	o, err := NewStderrOut()
 	if err != nil {
 		t.Fatalf("NewStderrOut(): got '%v' error, want no error", err)
