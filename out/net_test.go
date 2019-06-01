@@ -1,14 +1,17 @@
-package stderr
+package out
 
 import (
 	"testing"
 	"time"
-
-	"github.com/avegner/log/out"
 )
 
-func TestMultiWrite(t *testing.T) {
-	o := createStderrOutput(t)
+var (
+	address = "localhost:50300"
+	network = "tcp"
+)
+
+func TestMultiWriteNet(t *testing.T) {
+	o := createNetOutput(t, network, address)
 	done := make(chan struct{})
 
 	r := func(rec string) {
@@ -29,10 +32,10 @@ func TestMultiWrite(t *testing.T) {
 	close(done)
 }
 
-func createStderrOutput(t *testing.T) out.Outputter {
-	o, err := New()
+func createNetOutput(t *testing.T, network, address string) Outputter {
+	o, err := NewNetOut(network, address)
 	if err != nil {
-		t.Fatalf("New(): got '%v' error, want no error", err)
+		t.Fatalf("NewNetOut(): got '%v' error, want no error", err)
 	}
 	return o
 }

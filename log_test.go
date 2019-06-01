@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/avegner/log/out"
-	"github.com/avegner/log/out/stderr"
 )
 
 var (
@@ -27,7 +26,7 @@ func TestChildLog(t *testing.T) {
 }
 
 func createOuts(t *testing.T) []out.Outputter {
-	stderr, err := stderr.New()
+	stderr, err := out.NewStderrOut()
 
 	if err != nil {
 		t.Fatal(err)

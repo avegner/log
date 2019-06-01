@@ -1,20 +1,18 @@
-package file
+package out
 
 import (
 	"compress/zlib"
 	"testing"
 	"time"
-
-	"github.com/avegner/log/out"
 )
 
 var (
-	name  = "test.log"
-	level = zlib.NoCompression
+	fileName  = "test.log"
+	compressLevel = zlib.NoCompression
 )
 
-func TestMultiWrite(t *testing.T) {
-	o := createFileOutput(t, name, level)
+func TestMultiWriteFile(t *testing.T) {
+	o := createFileOutput(t, fileName, compressLevel)
 	done := make(chan struct{})
 
 	r := func(rec string) {
@@ -35,10 +33,10 @@ func TestMultiWrite(t *testing.T) {
 	close(done)
 }
 
-func createFileOutput(t *testing.T, name string, level int) out.Outputter {
-	o, err := New(name, 0644, false, level)
+func createFileOutput(t *testing.T, name string, level int) Outputter {
+	o, err := NewFileOut(name, 0644, false, level)
 	if err != nil {
-		t.Fatalf("New(): got '%v' error, want no error", err)
+		t.Fatalf("NewFileOut(): got '%v' error, want no error", err)
 	}
 	return o
 }

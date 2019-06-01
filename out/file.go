@@ -1,14 +1,12 @@
-package file
+package out
 
 import (
 	"compress/zlib"
 	"os"
 	"sync"
-
-	"github.com/avegner/log/out"
 )
 
-func New(name string, perm os.FileMode, append bool, comprLevel int) (out.Outputter, error) {
+func NewFileOut(name string, perm os.FileMode, append bool, comprLevel int) (Outputter, error) {
 	flags := os.O_RDWR | os.O_CREATE
 	if append {
 		flags |= os.O_APPEND
@@ -26,38 +24,31 @@ func New(name string, perm os.FileMode, append bool, comprLevel int) (out.Output
 		return nil, err
 	}
 
-	return &output{z: z}, nil
+	return &fileOut{z: z}, nil
 }
 
-type output struct {
+type fileOut struct {
 	mu   sync.Mutex
 	z    *zlib.Writer
-	done chan struct{}
 }
 
-func (o *output) Write(p []byte) (n int, err error) {
+func (o *fileOut) Write(p []byte) (n int, err error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
 	return o.z.Write(p)
 }
 
-func (o *output) Flush() {
+func (o *fileOut) Flush() {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
 	o.z.Flush()
 }
 
-func (o *output) Close() error {
+func (o *fileOut) Close() error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
-	select {
-	case <-o.done:
-		return nil
-	default:
-		close(o.done)
-		return o.z.Close()
-	}
+	return o.z.Close()
 }
