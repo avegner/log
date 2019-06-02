@@ -28,22 +28,22 @@ func NewFileOut(name string, perm os.FileMode, append bool, comprLevel int) (Out
 }
 
 type fileOut struct {
-	mu   sync.Mutex
-	z    *zlib.Writer
+	mu sync.Mutex
+	z  *zlib.Writer
 }
 
-func (o *fileOut) Write(p []byte) (n int, err error) {
+func (o *fileOut) Write(bs []byte) (n int, err error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
-	return o.z.Write(p)
+	return o.z.Write(bs)
 }
 
-func (o *fileOut) Flush() {
+func (o *fileOut) Flush() error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
-	o.z.Flush()
+	return o.z.Flush()
 }
 
 func (o *fileOut) Close() error {

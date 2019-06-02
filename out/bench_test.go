@@ -1,13 +1,13 @@
 package out
 
 import (
+	"compress/zlib"
 	"fmt"
 	"testing"
-	"compress/zlib"
 )
 
 const (
-	logsNumber = 1000000	
+	logsNumber = 1000000
 )
 
 func BenchmarkStderrOut(b *testing.B) {
@@ -31,7 +31,7 @@ func BenchmarkFileOut(b *testing.B) {
 }
 
 func BenchmarkNetOut(b *testing.B) {
-	o, err := NewNetOut(network, address)
+	o, err := NewNetOut(network, address, 1000)
 	if err != nil {
 		b.Fatalf("NewNetOut(): got '%v' error, want no error", err)
 	}

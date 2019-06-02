@@ -16,7 +16,8 @@ func (o *stderrOut) Write(p []byte) (n int, err error) {
 	return fmt.Fprint(os.Stderr, string(p))
 }
 
-func (o *stderrOut) Flush() {
+func (o *stderrOut) Flush() error {
+	return nil
 }
 
 func (o *stderrOut) Close() error {

@@ -1,6 +1,13 @@
 package out
 
-import "io"
+import (
+	"errors"
+	"io"
+)
+
+var (
+	ErrClosed = errors.New("closed")
+)
 
 type Outputter interface {
 	io.Writer
@@ -9,5 +16,5 @@ type Outputter interface {
 }
 
 type Flusher interface {
-	Flush()
+	Flush() error
 }
