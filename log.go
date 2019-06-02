@@ -1,7 +1,9 @@
 package log
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -94,12 +96,16 @@ func (l *logger) Printf(level Level, format string, args ...interface{}) error {
 
 	rec := ts + " " + pr + " " + fmt.Sprintf(format, args...) + "\n"
 
-	for _, o := range l.common.getOuts() {
+	errss := []string{}
+	for i, o := range l.common.getOuts() {
 		if _, err := o.Write([]byte(rec)); err != nil {
-			return err
+			errss = append(errss, fmt.Sprintf("write out %d: '%v'", i, err))
 		}
 	}
 
+	if len(errss) > 0 {
+		return errors.New(strings.Join(errss, ", "))
+	}
 	return nil
 }
 
