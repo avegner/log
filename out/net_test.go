@@ -34,7 +34,7 @@ func TestMultiWriteNet(t *testing.T) {
 }
 
 func createNetOut(t *testing.T, network, address string) Outputter {
-	o, err := NewNetOut(network, address, 1000)
+	o, err := NewNetOut(network, address)
 	if err != nil {
 		t.Fatalf("NewNetOut(): got '%v' error, want no error", err)
 	}

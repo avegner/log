@@ -1,18 +1,18 @@
 package out
 
 import (
+	"bytes"
 	"context"
-	"errors"
 	"net"
 	"sync"
 	"time"
 )
 
-func NewNetOut(network, address string, queueSize int) (Outputter, error) {
+func NewNetOut(network, address string) (Outputter, error) {
 	o := &netOut{
 		network: network,
 		address: address,
-		queue:   make(chan []byte, queueSize),
+		data:    make(chan struct{}, 1),
 		done:    make(chan struct{}),
 	}
 
@@ -26,7 +26,9 @@ type netOut struct {
 	conn    net.Conn
 	network string
 	address string
-	queue   chan []byte
+	buf     bytes.Buffer
+	bufMu   sync.Mutex
+	data    chan struct{}
 	done    chan struct{}
 	wg      sync.WaitGroup
 }
@@ -38,12 +40,11 @@ func (o *netOut) Write(bs []byte) (n int, err error) {
 	default:
 	}
 
-	select {
-	case o.queue <- bs:
-		return len(bs), nil
-	default:
-		return 0, errors.New("queue overflow")
-	}
+	o.bufMu.Lock()
+	defer o.bufMu.Unlock()
+
+	defer o.gotData()
+	return o.buf.Write(bs)
 }
 
 func (o *netOut) output() {
@@ -62,11 +63,24 @@ reconnect:
 		}
 	}
 
+	batch := make([]byte, 1024)
 	for {
 		select {
-		case bs := <-o.queue:
-			// TODO: use write timeout
-			if _, err := o.conn.Write(bs); err != nil {
+		case <-o.data:
+			o.bufMu.Lock()
+			read, _ := o.buf.Read(batch)
+			left := o.buf.Len()
+			o.bufMu.Unlock()
+
+			if left > 0 {
+				o.gotData()
+			}
+			if read == 0 {
+				continue
+			}
+
+			// TODO: use write timeout ?
+			if _, err := o.conn.Write(batch); err != nil {
 				_ = o.conn.Close()
 				o.conn = nil
 				goto reconnect
@@ -126,4 +140,11 @@ func (o *netOut) dialContext(ctx context.Context) error {
 
 	o.conn, err = d.DialContext(ctx, o.network, o.address)
 	return err
+}
+
+func (o *netOut) gotData() {
+	select {
+	case o.data <- struct{}{}:
+	default:
+	}
 }

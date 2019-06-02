@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	logsNumber = 1000000
+	logsNumber = 1000
 )
 
 func BenchmarkStderrOut(b *testing.B) {
@@ -31,7 +31,7 @@ func BenchmarkFileOut(b *testing.B) {
 }
 
 func BenchmarkNetOut(b *testing.B) {
-	o, err := NewNetOut(network, address, 1000)
+	o, err := NewNetOut(network, address)
 	if err != nil {
 		b.Fatalf("NewNetOut(): got '%v' error, want no error", err)
 	}
@@ -40,11 +40,12 @@ func BenchmarkNetOut(b *testing.B) {
 	benchOut(b, o)
 }
 
-func benchOut(b *testing.B, out Outputter) {
+func benchOut(b *testing.B, o Outputter) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		for i := 0; i < logsNumber; i++ {
-			_, _ = out.Write([]byte(fmt.Sprintf("benchmark record number %d\n", i)))
+			_, _ = o.Write([]byte(fmt.Sprintf("benchmark record number %d\n", i)))
 		}
 	}
+	b.StopTimer()
 }
