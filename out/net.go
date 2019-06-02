@@ -82,8 +82,9 @@ func (o *netOut) Flush() error {
 	case <-o.done:
 		return ErrClosed
 	default:
-		return nil
 	}
+
+	return nil
 }
 
 func (o *netOut) Close() error {

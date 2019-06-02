@@ -24,15 +24,25 @@ func NewFileOut(name string, perm os.FileMode, append bool, comprLevel int) (Out
 		return nil, err
 	}
 
-	return &fileOut{z: z}, nil
+	return &fileOut{
+		z:    z,
+		done: make(chan struct{}),
+	}, nil
 }
 
 type fileOut struct {
-	mu sync.Mutex
-	z  *zlib.Writer
+	mu   sync.Mutex
+	z    *zlib.Writer
+	done chan struct{}
 }
 
 func (o *fileOut) Write(bs []byte) (n int, err error) {
+	select {
+	case <-o.done:
+		return 0, ErrClosed
+	default:
+	}
+
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
@@ -40,6 +50,12 @@ func (o *fileOut) Write(bs []byte) (n int, err error) {
 }
 
 func (o *fileOut) Flush() error {
+	select {
+	case <-o.done:
+		return ErrClosed
+	default:
+	}
+
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
@@ -47,6 +63,12 @@ func (o *fileOut) Flush() error {
 }
 
 func (o *fileOut) Close() error {
+	select {
+	case <-o.done:
+		return ErrClosed
+	default:
+	}
+
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
