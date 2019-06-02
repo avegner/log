@@ -13,7 +13,7 @@ import (
 type Logger interface {
 	Printf(level Level, format string, args ...interface{}) error
 	SetMask(mask Level)
-	Flush()
+	Flush() error
 	Child(name string) Logger
 }
 
@@ -95,8 +95,8 @@ func (l *logger) Printf(level Level, format string, args ...interface{}) error {
 	}
 
 	rec := ts + " " + pr + " " + fmt.Sprintf(format, args...) + "\n"
-
 	errss := []string{}
+
 	for i, o := range l.common.getOuts() {
 		if _, err := o.Write([]byte(rec)); err != nil {
 			errss = append(errss, fmt.Sprintf("write out %d: '%v'", i, err))
@@ -113,10 +113,19 @@ func (l *logger) SetMask(mask Level) {
 	l.common.setMask(mask)
 }
 
-func (l *logger) Flush() {
-	for _, o := range l.common.getOuts() {
-		o.Flush()
+func (l *logger) Flush() error {
+	errss := []string{}
+
+	for i, o := range l.common.getOuts() {
+		if err := o.Flush(); err != nil {
+			errss = append(errss, fmt.Sprintf("flush out %d: '%v'", i, err))
+		}
 	}
+
+	if len(errss) > 0 {
+		return errors.New(strings.Join(errss, ", "))
+	}
+	return nil
 }
 
 func (l *logger) Child(name string) Logger {
