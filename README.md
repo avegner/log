@@ -38,7 +38,9 @@ There are standard outputs:
 
 ```go
 func NewNetOut(network, address string) (Outputter, error)
+
 func NewFileOut(name string, perm os.FileMode, append bool, comprLevel int) (Outputter, error)
+
 func NewStderrOut() (Outputter, error)
 ```
 
