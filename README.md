@@ -6,6 +6,12 @@ This a logger supporting the following outputs:
 * file (zlib compression)
 * custom output
 
+# Installation
+
+```
+go get github.com/avegner/log
+```
+
 # API
 
 Logger has a very simple interface:
