@@ -15,6 +15,7 @@ type Logger interface {
 	SetMask(mask Level)
 	Flush() error
 	Child(name string) Logger
+	Dump(level Level, data []byte) error
 }
 
 type Level int
@@ -134,6 +135,29 @@ func (l *logger) Child(name string) Logger {
 		name:   name,
 		common: l.common,
 	}
+}
+
+func (l *logger) Dump(level Level, data []byte) error {
+	lss := make([]string, 0, 16)
+	pl := func(ss []string) error {
+		return l.Printf(level, "%s", strings.Join(ss, " "))
+	}
+
+	for i, _ := range data {
+		lss = append(lss, fmt.Sprintf("%02X", data[i]))
+		if len(lss) < cap(lss) {
+			continue
+		}
+		if err := pl(lss); err != nil {
+			return err
+		}
+		lss = lss[:0]
+	}
+
+	if len(lss) == 0 {
+		return nil
+	}
+	return pl(lss)
 }
 
 type logger struct {
