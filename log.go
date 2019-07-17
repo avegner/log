@@ -138,6 +138,10 @@ func (l *logger) Child(name string) Logger {
 }
 
 func (l *logger) Dump(level Level, data []byte) error {
+	if level&l.common.getMask() == 0x0 {
+		return nil
+	}
+
 	lss := make([]string, 0, 16)
 	pl := func(ss []string) error {
 		return l.Printf(level, "%s", strings.Join(ss, " "))
